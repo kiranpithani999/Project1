@@ -12,7 +12,6 @@ pipeline {
             steps {
                 git branch: 'master',
                     url: 'https://github.com/kiranpithani999/Project1.git'
-                    tool: 'git'
             }
         }
 
