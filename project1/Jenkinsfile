@@ -6,6 +6,10 @@ pipeline {
         string(name: 'CONFIRM_DESTROY', defaultValue: '', description: 'Type YES to allow destroy')
     }
 
+    environment {
+        AWS_DEFAULT_REGION = "ap-south-1"
+    }
+
     stages {
 
         stage('Checkout') {
@@ -15,27 +19,20 @@ pipeline {
             }
         }
 
-        stage('Terraform Init') {
-            steps {
-                dir('project1/Terraform') {
-                    sh 'terraform init'
-                }
-            }
-        }
-
-        stage('Terraform Validate') {
-            steps {
-                dir('project1/Terraform') {
-                    sh 'terraform validate'
-                }
-            }
-        }
-
-        stage('Terraform Plan') {
+        stage('Terraform Init & Plan') {
             when { expression { params.ACTION == 'plan' } }
             steps {
                 dir('project1/Terraform') {
-                    sh 'terraform plan'
+                    withCredentials([usernamePassword(
+                        credentialsId: 'AWS_creds',
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )]) {
+                        sh '''
+                            terraform init
+                            terraform plan
+                        '''
+                    }
                 }
             }
         }
@@ -44,7 +41,16 @@ pipeline {
             when { expression { params.ACTION == 'apply' } }
             steps {
                 dir('project1/Terraform') {
-                    sh 'terraform apply -auto-approve'
+                    withCredentials([usernamePassword(
+                        credentialsId: 'AWS_creds',
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )]) {
+                        sh '''
+                            terraform init
+                            terraform apply -auto-approve
+                        '''
+                    }
                 }
             }
         }
@@ -58,7 +64,16 @@ pipeline {
             }
             steps {
                 dir('project1/Terraform') {
-                    sh 'terraform destroy -auto-approve'
+                    withCredentials([usernamePassword(
+                        credentialsId: 'AWS_creds',
+                        usernameVariable: 'AWS_ACCESS_KEY_ID',
+                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                    )]) {
+                        sh '''
+                            terraform init
+                            terraform destroy -auto-approve
+                        '''
+                    }
                 }
             }
         }
