@@ -2,35 +2,24 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "yourdockerhubusername/my-app"
-        DOCKER_TAG = "${BUILD_NUMBER}"
-        SONARQUBE_SERVER = "SonarQubeServer"
-        KUBECONFIG = "/home/jenkins/.kube/config"
+        AWS_REGION = "ap-south-1"
+        ECR_ACCOUNT_ID = "arn:aws:ecr:us-east-1:221082205056:repository/project1/dev"   // Replace with your AWS account ID
+        ECR_REPO = "project1/dev"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        IMAGE_URI = "${ECR_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}"
+        CLUSTER_NAME = "my-eks-cluster"
     }
 
-    tools {
-        maven "Maven3"
-        jdk "JDK17"
+    parameters {
+        choice(name: 'ACTION', choices: ['deploy'], description: 'Deployment Action')
     }
 
     stages {
 
-        stage('Git Checkout') {
+        stage('Checkout Code') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/yourusername/yourrepo.git'
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv("${SONARQUBE_SERVER}") {
-                    sh '''
-                    mvn clean verify sonar:sonar \
-                    -Dsonar.projectKey=my-app \
-                    -Dsonar.projectName=my-app
-                    '''
-                }
+                git branch: 'master',
+                    url: 'https://github.com/kiranpithani999/Project1.git'
             }
         }
 
@@ -42,37 +31,44 @@ pipeline {
 
         stage('Docker Build') {
             steps {
+                sh 'docker build -t $IMAGE_URI .'
+            }
+        }
+
+        stage('ECR Login') {
+            steps {
                 sh '''
-                docker build -t $DOCKER_IMAGE:$DOCKER_TAG .
-                docker tag $DOCKER_IMAGE:$DOCKER_TAG $DOCKER_IMAGE:latest
+                aws ecr get-login-password --region $AWS_REGION \
+                | docker login --username AWS \
+                --password-stdin $ECR_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
                 '''
             }
         }
 
-        stage('Docker Push') {
+        stage('Push to ECR') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'docker-creds',
-                    usernameVariable: 'DOCKER_USER',
-                    passwordVariable: 'DOCKER_PASS'
-                )]) {
-                    sh '''
-                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                    docker push $DOCKER_IMAGE:$DOCKER_TAG
-                    docker push $DOCKER_IMAGE:latest
-                    '''
-                }
+                sh 'docker push $IMAGE_URI'
+            }
+        }
+
+        stage('Update Kubeconfig') {
+            steps {
+                sh '''
+                aws eks update-kubeconfig \
+                --region $AWS_REGION \
+                --name $CLUSTER_NAME
+                '''
             }
         }
 
         stage('Deploy to EKS') {
+                when {
+            branch 'main'
+            }
             steps {
                 sh '''
-                kubectl set image deployment/my-app \
-                my-app=$DOCKER_IMAGE:$DOCKER_TAG \
-                --record
-
-                kubectl rollout status deployment/my-app
+                kubectl set image deployment/java-app \
+                java-app=$IMAGE_URI --record
                 '''
             }
         }
