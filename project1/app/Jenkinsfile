@@ -7,14 +7,10 @@ pipeline {
 
     environment {
         AWS_REGION = "ap-south-1"
-        ECR_ACCOUNT_ID = "221082205056"   // Replace with your AWS account ID
+        ECR_ACCOUNT_ID = "221082205056"
         ECR_REPO = "java-app"
         IMAGE_TAG = "${BUILD_NUMBER}"
-        IMAGE_URI = "${ECR_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}"      
-    }
-
-    parameters {
-        choice(name: 'ACTION', choices: ['deploy'], description: 'Deployment Action')
+        IMAGE_URI = "${ECR_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}"
     }
 
     stages {
@@ -53,6 +49,8 @@ pipeline {
                 sh 'docker push $IMAGE_URI'
             }
         }
+
+    }  // ✅ Properly closed stages block
 
     post {
         success {
