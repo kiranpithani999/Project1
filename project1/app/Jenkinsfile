@@ -1,13 +1,16 @@
 pipeline {
     agent any
 
+    tools {
+        maven 'Maven3'
+    }
+
     environment {
         AWS_REGION = "ap-south-1"
-        ECR_ACCOUNT_ID = "arn:aws:ecr:us-east-1:221082205056:repository/project1/dev"   // Replace with your AWS account ID
-        ECR_REPO = "project1/dev"
+        ECR_ACCOUNT_ID = "221082205056"   // Replace with your AWS account ID
+        ECR_REPO = "java-app"
         IMAGE_TAG = "${BUILD_NUMBER}"
-        IMAGE_URI = "${ECR_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}"
-        CLUSTER_NAME = "my-eks-cluster"
+        IMAGE_URI = "${ECR_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}"      
     }
 
     parameters {
@@ -50,29 +53,6 @@ pipeline {
                 sh 'docker push $IMAGE_URI'
             }
         }
-
-        stage('Update Kubeconfig') {
-            steps {
-                sh '''
-                aws eks update-kubeconfig \
-                --region $AWS_REGION \
-                --name $CLUSTER_NAME
-                '''
-            }
-        }
-
-        stage('Deploy to EKS') {
-                when {
-            branch 'main'
-            }
-            steps {
-                sh '''
-                kubectl set image deployment/java-app \
-                java-app=$IMAGE_URI --record
-                '''
-            }
-        }
-    }
 
     post {
         success {
