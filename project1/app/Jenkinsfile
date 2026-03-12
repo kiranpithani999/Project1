@@ -1,63 +1,142 @@
 pipeline {
-    agent any
+agent any
 
-    tools {
-        maven 'maven-3.8.7'
-    }
+```
+tools {
+    maven 'maven-3.8.7'
+}
 
-    environment {
-        AWS_REGION = "ap-south-1"
-        ECR_ACCOUNT_ID = "221082205056"
-        ECR_REPO = "java-app"
-        IMAGE_TAG = "${BUILD_NUMBER}"
-        IMAGE_URI = "${ECR_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}"
-    }
+environment {
+    AWS_REGION = "ap-south-1"
+    ECR_ACCOUNT_ID = "221082205056"
+    ECR_REPO = "java-app"
+    IMAGE_TAG = "${BUILD_NUMBER}"
+    IMAGE_URI = "${ECR_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}"
+}
 
-    stages {
+stages {
 
-        stage('Checkout Code') {
-            steps {
-                git branch: 'master',
-                    url: 'https://github.com/kiranpithani999/Project1.git'
-            }
-        }
-
-        stage('Maven Build') {
-            steps {
-                sh 'mvn clean package -DskipTests'
-            }
-        }
-
-        stage('Docker Build') {
-            steps {
-                sh 'docker build -t $IMAGE_URI .'
-            }
-        }
-
-        stage('ECR Login') {
-            steps {
-                sh '''
-                aws ecr get-login-password --region $AWS_REGION \
-                | docker login --username AWS \
-                --password-stdin $ECR_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-                '''
-            }
-        }
-
-        stage('Push to ECR') {
-            steps {
-                sh 'docker push $IMAGE_URI'
-            }
-        }
-
-    }  // ✅ Properly closed stages block
-
-    post {
-        success {
-            echo "✅ CI/CD Pipeline Completed Successfully"
-        }
-        failure {
-            echo "❌ Pipeline Failed"
+    stage('Checkout Code') {
+        steps {
+            git branch: 'master',
+            url: 'https://github.com/kiranpithani999/Project1.git'
         }
     }
+
+    stage('Verify Files') {
+        steps {
+            sh 'ls -la'
+        }
+    }
+
+    stage('Maven Build') {
+        steps {
+            sh './mvnw clean package -DskipTests'
+        }
+    }
+
+    stage('Docker Build') {
+        steps {
+            sh 'docker build -t $IMAGE_URI .'
+        }
+    }
+
+    stage('ECR Login') {
+        steps {
+            sh '''
+            aws ecr get-login-password --region $AWS_REGION \
+            | docker login --username AWS \
+            --password-stdin $ECR_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+            '''
+        }
+    }
+
+    stage('Push to ECR') {
+        steps {
+            sh 'docker push $IMAGE_URI'
+        }
+    }
+}
+
+post {
+    success {
+        echo "✅ CI/CD Pipeline Completed Successfully"
+    }
+    failure {
+        echo "❌ Pipeline Failed"
+    }
+}
+```
+
+}
+pipeline {
+agent any
+
+```
+tools {
+    maven 'maven-3.8.7'
+}
+
+environment {
+    AWS_REGION = "ap-south-1"
+    ECR_ACCOUNT_ID = "221082205056"
+    ECR_REPO = "java-app"
+    IMAGE_TAG = "${BUILD_NUMBER}"
+    IMAGE_URI = "${ECR_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}:${IMAGE_TAG}"
+}
+
+stages {
+
+    stage('Checkout Code') {
+        steps {
+            git branch: 'master',
+            url: 'https://github.com/kiranpithani999/Project1.git'
+        }
+    }
+
+    stage('Verify Files') {
+        steps {
+            sh 'ls -la'
+        }
+    }
+
+    stage('Maven Build') {
+        steps {
+            sh './mvnw clean package -DskipTests'
+        }
+    }
+
+    stage('Docker Build') {
+        steps {
+            sh 'docker build -t $IMAGE_URI .'
+        }
+    }
+
+    stage('ECR Login') {
+        steps {
+            sh '''
+            aws ecr get-login-password --region $AWS_REGION \
+            | docker login --username AWS \
+            --password-stdin $ECR_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+            '''
+        }
+    }
+
+    stage('Push to ECR') {
+        steps {
+            sh 'docker push $IMAGE_URI'
+        }
+    }
+}
+
+post {
+    success {
+        echo "✅ CI/CD Pipeline Completed Successfully"
+    }
+    failure {
+        echo "❌ Pipeline Failed"
+    }
+}
+```
+
 }
