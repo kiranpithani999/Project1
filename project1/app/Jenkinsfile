@@ -25,13 +25,14 @@ pipeline {
         stage('Verify Files') {
             steps {
                 sh 'ls -la'
-                sh 'ls app'
+                sh 'ls project1'
+                sh 'ls project1/app'
             }
         }
 
         stage('Maven Build') {
             steps {
-                dir('app') {
+                dir('project1/app') {
                     sh 'mvn clean package -DskipTests'
                 }
             }
@@ -39,7 +40,7 @@ pipeline {
 
         stage('Docker Build') {
             steps {
-                dir('app') {
+                dir('project1/app') {
                     sh 'docker build -t $IMAGE_URI .'
                 }
             }
