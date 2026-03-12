@@ -1,5 +1,5 @@
 pipeline {
-    agent { label 'node2'}
+    agent { label 'node2' }
 
     tools {
         maven 'maven-3.8.7'
@@ -25,16 +25,14 @@ pipeline {
         stage('Verify Files') {
             steps {
                 sh 'ls -la'
+                sh 'ls app'
             }
         }
 
         stage('Maven Build') {
             steps {
                 dir('app') {
-                    sh '''
-                    chmod +x mvnw
-                    ./mvnw clean package -DskipTests
-                    '''
+                    sh 'mvn clean package -DskipTests'
                 }
             }
         }
